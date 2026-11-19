@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>bkey</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<main>
+  <section id="login" class="card">
+    <h1>bkey</h1>
+    <p class="sub">local secrets vault</p>
+    <label for="pass">Master passphrase</label>
+    <input id="pass" type="password" autocomplete="current-password">
+    <button id="unlock" class="primary">Unlock</button>
+    <details>
+      <summary>Agent token</summary>
+      <label for="agent">Agent name</label>
+      <input id="agent" autocomplete="off">
+      <label for="token">Agent token</label>
+      <input id="token" type="password" autocomplete="off">
+      <button id="auth">Sign in as agent</button>
+    </details>
+    <p id="err" class="err" hidden></p>
+  </section>
+
+  <section id="vault" hidden>
+    <header>
+      <h1>bkey</h1>
+      <div>
+        <span id="who" class="who"></span>
+        <button id="lock" class="ghost">Lock</button>
+      </div>
+    </header>
+    <input id="q" placeholder="filter …" autocomplete="off">
+    <ul id="list"></ul>
+    <p class="foot">entries are marked <code>*</code> readable by every agent ·
+      <code>agent:NAME</code> readable by that agent alone</p>
+  </section>
+</main>
+<script src="/app.js"></script>
+</body>
+</html>

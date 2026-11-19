@@ -1,0 +1,76 @@
+:root {
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  font: 15px/1.5 system-ui, sans-serif;
+  background: #101418;
+  color: #dfe7ee;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+}
+main { width: 100%; max-width: 640px; padding: 24px 16px; }
+
+h1 { font-size: 20px; margin: 0 0 2px; letter-spacing: 1px; }
+.sub { margin: 0 0 18px; color: #7d8b99; }
+header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+header div { display: flex; gap: 10px; align-items: center; }
+.who { color: #7d8b99; font-size: 13px; }
+
+input {
+  width: 100%;
+  padding: 9px 10px;
+  margin: 6px 0 12px;
+  background: #171d24;
+  border: 1px solid #2c3944;
+  border-radius: 6px;
+  color: inherit;
+  font: inherit;
+}
+input:focus { outline: 1px solid #4f8cc9; }
+
+button {
+  font: inherit;
+  padding: 8px 14px;
+  border-radius: 6px;
+  border: 1px solid #2c3944;
+  background: #171d24;
+  color: inherit;
+  cursor: pointer;
+}
+button:hover { border-color: #4f8cc9; }
+.primary { background: #2b5f94; border-color: #2b5f94; width: 100%; }
+.ghost { background: transparent; }
+
+details { margin-top: 16px; }
+summary { cursor: pointer; color: #7d8b99; }
+.err { color: #e08a8a; }
+
+.card { margin-top: 42px; }
+
+ul#list { list-style: none; margin: 12px 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.entry {
+  background: #171d24;
+  border: 1px solid #232d36;
+  border-radius: 8px;
+  padding: 10px 12px;
+}
+.name { font-weight: 600; }
+.acl { display: inline-block; margin-left: 10px; font-size: 12px; color: #6fa8d8; }
+.note { display: block; color: #7d8b99; font-size: 13px; }
+.row { margin-top: 6px; display: flex; gap: 6px; }
+.row button { font-size: 13px; padding: 4px 10px; }
+.secret {
+  display: block;
+  margin-top: 8px;
+  padding: 6px 8px;
+  background: #101418;
+  border: 1px dashed #2c3944;
+  border-radius: 6px;
+  word-break: break-all;
+  user-select: all;
+}
+.foot { color: #7d8b99; font-size: 12px; }
+code { font-size: 13px; }
