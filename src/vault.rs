@@ -201,7 +201,7 @@ fn unwrap_key(bloc: &Bloc, secret: &str) -> Result<Zeroizing<[u8; KEY_LEN]>> {
     off += NONCE_LEN;
     let ct = &raw[off..];
     let key = kdf(secret, salt)?;
-    let dk = cipher(key.as_ref())
+    let mut dk = cipher(key.as_ref())
         .decrypt(
             XNonce::from_slice(nonce),
             Payload {

@@ -3,7 +3,6 @@
 //! pages can authenticate with agent tokens when started with --origin.
 
 use std::collections::HashMap;
-use std::io::Read;
 use std::path::Path;
 
 use tiny_http::{Header, Request, Response, Server};
