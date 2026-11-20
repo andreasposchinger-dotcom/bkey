@@ -1,7 +1,7 @@
 bkey Attribution License (bAL) Version 1.0
 ===========================================
 
-Copyright (c) 2026 Benedikt Durlesser ("rasportiy", https://github.com/rasportiy)
+Copyright (c) 2026 Andreas Poschinger ("rasportiy", https://github.com/rasportiy)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
@@ -13,7 +13,7 @@ furnished to do so, subject to the following conditions:
 1. NOTICE RETENTION. The above copyright notice, this license text and the
    attribution notice
 
-     "Original author: Benedikt Durlesser (rasportiy),
+     "Original author: Poschinger (rasportiy),
       https://github.com/rasportiy"
 
    must be retained in all copies or substantial portions of the Software,
@@ -23,7 +23,7 @@ furnished to do so, subject to the following conditions:
 2. ATTRIBUTION OF MODIFIED VERSIONS. Any person who modifies the Software and
    publishes or distributes it, in source or compiled form, or who publishes
    a derivative work based on the Software, must prominently and visibly name
-   Benedikt Durlesser ("rasportiy", https://github.com/rasportiy) as the
+   Andreas Poschinger ("rasportiy", https://github.com/rasportiy) as the
    ORIGINAL AUTHOR of the Software:
 
    a) in the documentation or README of the published version, and
@@ -58,7 +58,7 @@ Kurzfassung (unverbindlich, deutsche Zusammenfassung):
 Du darfst bkey frei nutzen, verändern, weitergeben und verkaufen.
 Pflicht bei Veränderung und (Wieder-)Veröffentlichung:
 
-  1. Benedikt Durlesser (rasportiy) als ORIGINAL-AUTOR nennen:
+  1. Andreas Poschinger (rasportiy) als ORIGINAL-AUTOR nennen:
      in der README/Documentation und an mindestens einer weiteren
      sichtbaren Stelle (Repo-Beschreibung, Landing-Page oder Release Notes).
   2. Diese Lizenz samt Copyright-Hinweis beibehalten.
