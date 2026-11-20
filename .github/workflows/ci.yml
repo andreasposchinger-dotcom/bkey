@@ -1,6 +1,9 @@
 name: CI
 on: [push, pull_request]
 
+permissions:
+  issues: write
+
 jobs:
   build-and-test:
     strategy:
@@ -10,5 +13,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
-      - run: cargo build --locked --release
-      - run: cargo test --locked
+      - name: Build (diagnostic)
+        id: build
+        run: |
+          set -o pipefail
+          cargo build --locked --release 2>&1 | tee build.log
+        shell: bash
+      - name: Test (diagnostic)
+        id: test
+        if: steps.build.outcome == 'success'
+        run: |
+          set -o pipefail
+          cargo test --locked 2>&1 | tee test.log
+        shell: bash
+      - name: Post failure log as issue (temporary diagnostic)
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const read = (f) => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { return ''; } };
+            const log = (read('build.log') + '\n=== TEST ===\n' + read('test.log')).slice(-16000);
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `CI failure on ${context.runNumber}: ${process.env.RUNNER_OS ?? 'runner'}`,
+              body: "```\n" + log + "\n```",
+            });
