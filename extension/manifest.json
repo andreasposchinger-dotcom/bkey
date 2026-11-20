@@ -1,0 +1,24 @@
+{
+  "manifest_version": 3,
+  "name": "bkey",
+  "version": "0.1.0",
+  "description": "bkey password manager: autofill and save logins from your local bkey vault (bkey serve).",
+  "permissions": ["storage"],
+  "host_permissions": ["http://127.0.0.1/*", "http://localhost/*"],
+  "background": {
+    "service_worker": "background.js",
+    "scripts": ["background.js"]
+  },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"],
+      "run_at": "document_idle",
+      "all_frames": true
+    }
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "bkey"
+  }
+}

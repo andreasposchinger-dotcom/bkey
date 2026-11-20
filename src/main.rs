@@ -18,12 +18,15 @@ USAGE:
       Create a new vault (asks for a master passphrase).
 
   bkey set NAME [--allow LIST] [--note TEXT] [--generate [N] | --secret-file F]
+                [--username USER] [--url HOST]
       Store a secret. --allow is a comma list of principals:
         claude-code,vibe          ->  agent:claude-code, agent:vibe
         *                         ->  every agent may read it
       No --allow means: only the human owner (master passphrase) can read it.
       Secret is read hidden from the terminal, piped via stdin,
       from a file (--secret-file) or generated (--generate, default 32 bytes hex).
+      For website logins set --username and --url (e.g. --url github.com);
+      the browser extension then autofills them on that site.
 
   bkey get NAME [--out plain|json|env]
       Read a secret. Caller is detected automatically:
@@ -243,6 +246,8 @@ fn cmd_set(args: &[String]) -> Result<()> {
     let secret = read_secret(args)?;
     let acl = parse_allow(flag_value(args, "--allow"))?;
     let note = flag_value(args, "--note").unwrap_or("").to_string();
+    let username = flag_value(args, "--username").unwrap_or("").to_string();
+    let url = flag_value(args, "--url").unwrap_or("").to_lowercase();
     let path = vault_path_arg(args)?;
     let pass = ask_pass("master passphrase: ")?;
     let mut sess = Session::open_human(&path, &pass)?;
@@ -252,6 +257,8 @@ fn cmd_set(args: &[String]) -> Result<()> {
             secret: secret.to_string(),
             acl: acl.clone(),
             note,
+            username,
+            url,
             created: vault::now(),
         },
     );
@@ -287,7 +294,12 @@ fn cmd_get(args: &[String]) -> Result<()> {
         "env" => println!("export {}='{}'", name.to_uppercase().replace('-', "_"), e.secret),
         "json" => println!(
             "{}",
-            serde_json::json!({ "name": name, "secret": e.secret })
+            serde_json::json!({
+                "name": name,
+                "secret": e.secret,
+                "username": e.username,
+                "url": e.url,
+            })
         ),
         other => return Err(format!("unknown --out '{other}'").into()),
     }
@@ -313,6 +325,8 @@ fn cmd_list(args: &[String]) -> Result<()> {
                     "name": name,
                     "acl": e.acl,
                     "note": e.note,
+                    "username": e.username,
+                    "url": e.url,
                     "created": e.created,
                 })
             })
@@ -336,7 +350,13 @@ fn cmd_list(args: &[String]) -> Result<()> {
         } else {
             e.acl.join(",")
         };
-        println!("{:<w$}  {:<16}  {}", name, who, e.note);
+        // detail column: login user@site first, then the free-text note
+        let mut detail = String::new();
+        if !e.username.is_empty() || !e.url.is_empty() {
+            detail.push_str(&format!("{}@{} ", e.username, e.url));
+        }
+        detail.push_str(&e.note);
+        println!("{:<w$}  {:<16}  {}", name, who, detail.trim_end());
     }
     Ok(())
 }

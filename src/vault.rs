@@ -73,7 +73,9 @@ pub struct Store {
 
 /// One secret. `acl` lists additional principals besides the human owner:
 /// `agent:<name>` entries, or `*` for every agent.
-#[derive(Serialize, Deserialize, Clone)]
+/// For website logins, `username` and `url` hold the login user and the
+/// site hostname (e.g. "github.com") so the browser extension can autofill.
+#[derive(Serialize, Deserialize, Clone, Default)]
 pub struct Entry {
     #[serde(default)]
     pub secret: String,
@@ -81,6 +83,10 @@ pub struct Entry {
     pub acl: Vec<String>,
     #[serde(default)]
     pub note: String,
+    #[serde(default)]
+    pub username: String,
+    #[serde(default)]
+    pub url: String,
     #[serde(default)]
     pub created: u64,
 }
@@ -493,6 +499,7 @@ mod tests {
                     acl: vec![agent_principal("claude-code")],
                     note: "test".into(),
                     created: now(),
+                    ..Entry::default()
                 },
             );
             s.save().unwrap();
@@ -513,6 +520,7 @@ mod tests {
                 acl: vec![agent_principal("claude-code")],
                 note: String::new(),
                 created: 0,
+                ..Entry::default()
             },
         );
         s.store.entries.insert(
@@ -522,6 +530,7 @@ mod tests {
                 acl: vec![agent_principal("vibe")],
                 note: String::new(),
                 created: 0,
+                ..Entry::default()
             },
         );
         let token = generate_token();
@@ -560,5 +569,21 @@ mod tests {
         s.save().unwrap();
         let names = list_agents(&p).unwrap();
         assert_eq!(names, vec!["a1".to_string(), "a2".to_string()]);
+    }
+
+    /// Vaults written before the username/url fields existed must still load.
+    #[test]
+    fn legacy_entry_deserializes() {
+        let e: Entry = serde_json::from_str(
+            r#"{"secret":"x","acl":["agent:old"],"note":"n","created":1}"#,
+        )
+        .unwrap();
+        assert_eq!(e.username, "");
+        assert_eq!(e.url, "");
+        assert_eq!(e.secret, "x");
+        let s: Store =
+            serde_json::from_str(r#"{"entries":{"a":{"secret":"y"}}}"#).unwrap();
+        assert_eq!(s.entries["a"].secret, "y");
+        assert!(s.entries["a"].acl.is_empty());
     }
 }

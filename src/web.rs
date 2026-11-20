@@ -1,6 +1,8 @@
-//! Local web UI and token API. Read-only, keeps unlocked stores in memory
-//! per session. The UI answers on 127.0.0.1 (no CORS needed); external web
-//! pages can authenticate with agent tokens when started with --origin.
+//! Local web UI and token API. Unlocked human sessions keep the full vault
+//! session in memory (so the browser extension can save logins via /api/set);
+//! agent sessions stay read-only by vault design (agent blocs are absent).
+//! The UI answers on 127.0.0.1 (no CORS needed); external web pages can
+//! authenticate with agent tokens when started with --origin.
 
 use std::collections::HashMap;
 use std::path::Path;
@@ -11,9 +13,7 @@ use crate::vault::{self, Result};
 use rand::RngCore;
 
 struct WebSession {
-    store: vault::Store,
-    principal: String,
-    is_human: bool,
+    sess: vault::Session,
 }
 
 pub fn serve(args: &[String]) -> Result<()> {
@@ -122,14 +122,7 @@ fn handle(
                 Some(pass) => match vault::Session::open_human(path, &pass) {
                     Ok(s) => {
                         let sid = new_sid();
-                        sessions.insert(
-                            sid.clone(),
-                            WebSession {
-                                store: s.store,
-                                principal: "human".into(),
-                                is_human: true,
-                            },
-                        );
+                        sessions.insert(sid.clone(), WebSession { sess: s });
                         let resp = serde_json::json!({ "sid": sid }).to_string();
                         respond_json(req, 200, &resp, &cors);
                     }
@@ -149,17 +142,11 @@ fn handle(
             let token = v["token"].as_str().unwrap_or_default().to_string();
             match vault::Session::open_agent(path, &agent, &token) {
                 Ok(s) => {
+                    let principal = s.principal.clone();
                     let sid = new_sid();
-                    sessions.insert(
-                        sid.clone(),
-                        WebSession {
-                            store: s.store,
-                            principal: s.principal.clone(),
-                            is_human: false,
-                        },
-                    );
+                    sessions.insert(sid.clone(), WebSession { sess: s });
                     let resp =
-                        serde_json::json!({ "sid": sid, "principal": s.principal }).to_string();
+                        serde_json::json!({ "sid": sid, "principal": principal }).to_string();
                     respond_json(req, 200, &resp, &cors);
                 }
                 Err(e) => {
@@ -183,22 +170,25 @@ fn handle(
                 respond_json(req, 401, r#"{"error":"not authenticated"}"#, &cors);
                 return;
             };
-            let items: Vec<serde_json::Value> = sess
+            let s = &sess.sess;
+            let items: Vec<serde_json::Value> = s
                 .store
                 .entries
                 .iter()
-                .filter(|(_, e)| sess.is_human || e.allows(&sess.principal))
+                .filter(|(_, e)| s.is_human || e.allows(&s.principal))
                 .map(|(name, e)| {
                     serde_json::json!({
                         "name": name,
                         "acl": e.acl,
                         "note": e.note,
+                        "username": e.username,
+                        "url": e.url,
                         "created": e.created,
                     })
                 })
                 .collect();
             let resp = serde_json::json!({
-                "principal": sess.principal,
+                "principal": s.principal,
                 "entries": items,
             })
             .to_string();
@@ -209,17 +199,100 @@ fn handle(
                 respond_json(req, 401, r#"{"error":"not authenticated"}"#, &cors);
                 return;
             };
+            let s = &sess.sess;
             let name = url_decode(&u["/api/entry/".len()..]);
-            let Some(e) = sess.store.entries.get(&name) else {
+            let Some(e) = s.store.entries.get(&name) else {
                 respond_json(req, 404, r#"{"error":"not found or no access"}"#, &cors);
                 return;
             };
-            if !(sess.is_human || e.allows(&sess.principal)) {
+            if !(s.is_human || e.allows(&s.principal)) {
                 respond_json(req, 403, r#"{"error":"denied for this principal"}"#, &cors);
                 return;
             }
-            let resp = serde_json::json!({ "name": name, "secret": e.secret }).to_string();
+            let resp =
+                serde_json::json!({ "name": name, "secret": e.secret, "username": e.username })
+                    .to_string();
             respond_json(req, 200, &resp, &cors);
+        }
+        // Save a login (or any secret) from the browser extension.
+        // Only fully unlocked human sessions may write; agents cannot.
+        ("POST", "/api/set") => {
+            let v: serde_json::Value = match serde_json::from_str(&body) {
+                Ok(v) => v,
+                Err(_) => {
+                    respond_json(req, 400, r#"{"error":"bad json"}"#, &cors);
+                    return;
+                }
+            };
+            let Some(sess) = auth_session_mut(sessions, &req) else {
+                respond_json(req, 401, r#"{"error":"not authenticated"}"#, &cors);
+                return;
+            };
+            if !sess.sess.is_human {
+                respond_json(
+                    req,
+                    403,
+                    r#"{"error":"saving requires an unlocked human session"}"#,
+                    &cors,
+                );
+                return;
+            }
+            let name = v["name"].as_str().unwrap_or_default().trim().to_string();
+            let secret = v["secret"].as_str().unwrap_or_default().to_string();
+            if name.is_empty() || secret.is_empty() {
+                respond_json(req, 400, r#"{"error":"name and secret are required"}"#, &cors);
+                return;
+            }
+            if let Err(e) = vault::validate_name(&name) {
+                let resp = serde_json::json!({ "error": e.to_string() }).to_string();
+                respond_json(req, 400, &resp, &cors);
+                return;
+            }
+            let allow: Vec<String> = v["allow"]
+                .as_array()
+                .map(|a| {
+                    a.iter()
+                        .filter_map(|x| x.as_str().map(|s| s.to_string()))
+                        .collect::<Vec<_>>()
+                        .join(",")
+                })
+                .unwrap_or_default();
+            let acl = match crate::parse_allow(if allow.is_empty() {
+                None
+            } else {
+                Some(allow.as_str())
+            }) {
+                Ok(a) => a,
+                Err(_) => {
+                    respond_json(req, 400, r#"{"error":"bad allow list"}"#, &cors);
+                    return;
+                }
+            };
+            let username = v["username"].as_str().unwrap_or_default().to_string();
+            let url = v["url"].as_str().unwrap_or_default().to_lowercase();
+            let note = v["note"].as_str().unwrap_or_default().to_string();
+            let existed = sess.sess.store.entries.contains_key(&name);
+            sess.sess.store.entries.insert(
+                name.clone(),
+                vault::Entry {
+                    secret,
+                    acl,
+                    note,
+                    username,
+                    url,
+                    created: vault::now(),
+                },
+            );
+            match sess.sess.save() {
+                Ok(()) => {
+                    let resp = serde_json::json!({ "ok": true, "existed": existed }).to_string();
+                    respond_json(req, 200, &resp, &cors);
+                }
+                Err(e) => {
+                    let resp = serde_json::json!({ "error": e.to_string() }).to_string();
+                    respond_json(req, 500, &resp, &cors);
+                }
+            }
         }
         _ => respond_json(req, 404, r#"{"error":"not found"}"#, &cors),
     }
@@ -236,6 +309,19 @@ fn auth_session<'a>(
         .and_then(|h| h.value.as_str().strip_prefix("Bearer "))
         .map(|s| s.trim().to_string())?;
     sessions.get(&sid)
+}
+
+fn auth_session_mut<'a>(
+    sessions: &'a mut HashMap<String, WebSession>,
+    req: &Request,
+) -> Option<&'a mut WebSession> {
+    let sid = req
+        .headers()
+        .iter()
+        .find(|h| h.field.equiv("Authorization"))
+        .and_then(|h| h.value.as_str().strip_prefix("Bearer "))
+        .map(|s| s.trim().to_string())?;
+    sessions.get_mut(&sid)
 }
 
 fn respond(req: Request, status: u16, ctype: &str, body: Vec<u8>, cors: &str, preflight: bool) {

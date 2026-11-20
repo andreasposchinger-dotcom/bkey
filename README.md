@@ -8,6 +8,7 @@ Plugin.
 Mensch   ── Master-Passphrase ──► sieht alles
 Agent    ── eigener Token ──────► sieht nur seine erlaubten Secrets
 Browser  ── localhost Web-UI ───► ohne Plugin, ohne Extension
+Login    ── Extension (optional) ► AutoFill + Logins speichern
 ```
 
 ## Warum
@@ -25,6 +26,8 @@ genau das: **pro Agent ein Token, pro Secret eine ACL.**
 - Master-Passphrase-Wechselung hält Agenten-Tokens gültig
 - Browser-UI über `bkey serve` (localhost, ohne Plugin)
 - Optional: `--origin` erlaubt externen Webseiten die Token-Auth via CORS
+- **Browser-Passwortmanager**: kleine MV3-Extension (`extension/`) füllt
+  Username/Passwort auf Login-Seiten und speichert neue Logins im Vault
 - `zeroize` für Passwörter im RAM, atomic writes
 
 ## Installieren
@@ -43,6 +46,13 @@ bkey set openai-key --allow vibe --note "prod key"   # Secret wird versteckt abg
 bkey set anthropic-key --allow claude-code
 bkey get openai-key        # fragt Master-Passphrase, sieht alles
 bkey list
+```
+
+Website-Logins speichern (für die Browser-Extension):
+
+```bash
+bkey set github.com --username benedikt --url github.com --allow browser
+# --url = Hostname der Seite (Subdomains matchen automatisch)
 ```
 
 ## Agent einrichten
@@ -95,6 +105,53 @@ bkey serve --port 9000 --origin https://app.example.com
 Sicherheits-Header: CSP, `no-store`, `nosniff`, Session-IDs nur im RAM des
 Servers (beim Beenden weg). `sessionStorage` hält die Session nur im Tab.
 
+## Browser-Passwortmanager (Extension)
+
+Wie ein klassischer Passwort-Manager: Logins pro Website speichern,
+Username/Passwort per Klick ins Login-Formular füllen – alles im bkey-Vault.
+
+**Setup:**
+
+```bash
+bkey serve                                 # 1. Server läuft lassen
+bkey agent add browser                     # 2. Agent für die Extension
+```
+
+3. Chrome/Edge: `chrome://extensions` → *Entpackt laden* → Ordner `extension/`
+   auswählen. Firefox: `about:debugging` → *This Firefox* → *Load Temporary
+   Add-on* → `extension/manifest.json`.
+4. Extension-Popup öffnen: Server-URL (Default `127.0.0.1:8642`), Agent-Name
+   `browser` + Token aus Schritt 2 eintragen, speichern.
+5. Ebenfalls im Popup: mit **Master-Passphrase entsperren** – nur der
+   entsperrte Vollmodus kann Logins speichern.
+
+**Benutzung:**
+
+- Passwortfeld anklicken → neben dem Feld erscheint der kleine **bkey**-Chip
+  → Klick zeigt alle passenden Logins (Subdomains matchen: ein Eintrag
+  `--url github.com` füllt auch auf `gist.github.com`)
+- Eintrag anklicken → Username + Passwort werden eingesetzt
+- Unten im Menü: **Login speichern** (Name = Hostname, Username wird
+  geraten) – speichert das aktuell eingegebene Passwort im Vault
+
+**Modi:**
+
+| Modus | Was geht |
+|---|---|
+| Agent-Token (`agent:browser`) | nur füllen, sieht nur per ACL freigegebene Logins |
+| Popup-Unlock (Master-Passphrase) | alles: füllen + speichern |
+| Gesperrt | nichts |
+
+Gespeicherte Web-Logins bekommen automatisch `allow agent:browser`.
+Mehrere Accounts pro Seite: einfach mehrere Einträge mit `--url`
+anlegen, z. B. `github-work` und `github-private`.
+
+Technik: MV3, kein Build-Schritt, ~400 Zeilen reines JS ohne Abhängigkeiten.
+Fetches laufen im Background-Worker mit `host_permissions` auf
+`127.0.0.1` – die besuchten Seiten selbst haben keinerlei Zugriff auf den
+Vault. Das In-Page-Menü lebt in einem geschlossenen Shadow-DOM, damit
+Seiten-Styles und -Skripte es nicht manipulieren können.
+
 ## Sicherheitsmodell (ehrlich)
 
 - **Agent-Identität = Token-Besitz.** Ob "Claude Code" wirklich der Aufrufer
@@ -119,7 +176,8 @@ Servers (beim Beenden weg). `sessionStorage` hält die Session nur im Tab.
 
 Das Repo ist als Ausgangspunkt für eigene Vault-Tools gedacht und bewusst
 klein gehalten: 3 Quellcode-Dateien (`src/main.rs` = CLI, `src/vault.rs` =
-Kryptofluss, `src/web.rs` = HTTP-API) und 3 Inline-Dateien für die Web-UI.
+Kryptofluss, `src/web.rs` = HTTP-API), 3 Inline-Dateien für die Web-UI und
+eine build-lose MV3-Extension in `extension/` (5 kleine Dateien, kein npm).
 Forken, umbenennen, aufladen, Produktschlüssel dazubauen.
 
 > Verändertes Template und veröffentlicht dieser unter **bAL-1.0**:
