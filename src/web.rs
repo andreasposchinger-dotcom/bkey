@@ -248,7 +248,7 @@ fn handle(
                 respond_json(req, 400, &resp, &cors);
                 return;
             }
-            let allow: Vec<String> = v["allow"]
+            let allow: String = v["allow"]
                 .as_array()
                 .map(|a| {
                     a.iter()
