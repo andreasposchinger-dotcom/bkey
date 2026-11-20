@@ -33,7 +33,7 @@ must not be able to read Claude's key and vice versa. bkey does exactly that:
 ## Install
 
 ```bash
-cargo install --git https://github.com/rasportiy/bkey
+cargo install --git https://github.com/andreasposchinger-dotcom/bkey
 # or from a checkout:
 cargo install --path .
 ```
@@ -68,7 +68,11 @@ bkey agent add claude-code
 
 **2. Put the token into the agent config** (examples:
 [`examples/claude-code.md`](examples/claude-code.md),
-[`examples/agents-generic.md`](examples/agents-generic.md)):
+[`examples/codex.md`](examples/codex.md),
+[`examples/opencode.md`](examples/opencode.md),
+[`examples/vibe.md`](examples/vibe.md) for Mistral Vibe Code CLI,
+[`examples/agents-generic.md`](examples/agents-generic.md) for bots,
+CI and scripts):
 
 ```json
 { "env": { "BKEY_AGENT": "claude-code", "BKEY_TOKEN": "bka_...." } }
@@ -181,8 +185,8 @@ crypto flow, `src/web.rs` = HTTP API), 3 inline files for the web UI and a
 build-less MV3 extension in `extension/` (5 small files, no npm). Fork,
 rename, publish, add your product keys.
 
-> Modified template published under **bAL-1.0**: credit Benedikt Durlesser
-> (rasportiy) as the original author, see the [license](LICENSE).
+> Modified template published under **bAL-1.0**: credit Andreas Poschinger
+> (andreasposchinger-dotcom) as the original author, see the [license](LICENSE).
 
 ## Tests
 
