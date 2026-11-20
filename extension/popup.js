@@ -22,8 +22,8 @@ async function refresh() {
   $("agentToken").value = st.agentToken || "";
   status.className = "";
   status.textContent =
-    (r.unlocked ? "entsperrt (Vollmodus: füllen + speichern)" : "gesperrt") +
-    (r.agentConfigured ? " | Agent-Token gesetzt" : " | kein Agent-Token");
+    (r.unlocked ? "unlocked (full mode: fill + save)" : "locked") +
+    (r.agentConfigured ? " | agent token configured" : " | no agent token");
 }
 
 $("save").addEventListener("click", async () => {
@@ -33,24 +33,24 @@ $("save").addEventListener("click", async () => {
     agentName: $("agentName").value.trim(),
     agentToken: $("agentToken").value.trim(),
   });
-  if (r && r.ok) setOk("Einstellungen gespeichert");
-  else setErr("Einstellungen konnten nicht gespeichert werden");
+  if (r && r.ok) setOk("settings saved");
+  else setErr("could not save settings");
   refresh();
 });
 
 $("unlock").addEventListener("click", async () => {
   const pass = $("passphrase").value;
-  if (!pass) return setErr("Master-Passphrase eingeben");
+  if (!pass) return setErr("enter the master passphrase");
   const r = await send({ type: "unlock", passphrase: pass });
   $("passphrase").value = "";
-  if (r && r.ok) setOk("entsperrt - Speichern ist jetzt möglich");
-  else setErr((r && r.error) || "Entsperren fehlgeschlagen");
+  if (r && r.ok) setOk("unlocked - saving is now possible");
+  else setErr((r && r.error) || "unlock failed");
   refresh();
 });
 
 $("lock").addEventListener("click", async () => {
   await send({ type: "lock" });
-  setOk("gesperrt");
+  setOk("locked");
   refresh();
 });
 

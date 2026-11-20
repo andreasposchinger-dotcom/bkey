@@ -1,19 +1,19 @@
-# Generische Agenten (Vibe, Bots, CI, Skripte)
+# Generic agents (Vibe, bots, CI, scripts)
 
-bkey identifiziert Agenten über zwei Umgebungsvariablen:
+bkey identifies agents through two environment variables:
 
 ```bash
 BKEY_AGENT=<name>
 BKEY_TOKEN=<token>
 ```
 
-Wie die in den Agent-Prozess kommen, ist dem Tool egal - es müssen am Ende
-Umgebungsvariablen des Prozesses sein, der `bkey` aufruft.
+How they end up in the agent process does not matter to the tool - in the
+end they must be environment variables of the process that calls `bkey`.
 
-## Variante A: Shell-Profil / pro Projekt
+## Variant A: shell profile / per project
 
 ```bash
-# pro Projekt, z.B. in deinem Projekt-Env-File oder direnv (.envrc):
+# per project, e.g. in your project env file or direnv (.envrc):
 export BKEY_AGENT=vibe
 export BKEY_TOKEN=bka_....
 
@@ -21,7 +21,7 @@ bkey set project-api-key --allow vibe
 bkey get project-api-key
 ```
 
-## Variante B: Wrapper-Skript
+## Variant B: wrapper script
 
 ```bash
 #!/usr/bin/env bash
@@ -30,13 +30,11 @@ BKEY_AGENT=cloud-bot BKEY_TOKEN="$(cat ~/.config/cloud-bot/token)" \
   exec bkey get "$1"
 ```
 
-## Variante C: CI/CD
+## Variant C: CI/CD
 
-Den Token als CI-Secret speichern und als Umgebungsvariable an den Job
-reichen; Secrets im Vault mit `--allow ci` freigeben.
+Store the token as a CI secret and pass it to the job as an environment
+variable; allow the vault secrets with `--allow ci`.
 
-## Namenskonventionen
+## Naming conventions
 
-- Agentennamen: Buchstaben, Ziffern, `-`, `_`, `.` (1-64 Zeichen)
-- ACL-Prinzipal ist immer `agent:<name>`, im `--allow` reicht der nackte Name
-- `--allow '*'` (Sternchen) erlaubt ALLE Agenten - sparsam einsetzen
+- Agent names: letters, digits, `-`, `_`, `.` (1-64 characters)

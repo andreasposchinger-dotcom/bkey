@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="de">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <style>
@@ -23,23 +23,23 @@
   </style>
 </head>
 <body>
-  <h1>bkey <small>lokaler Passwort-Manager</small></h1>
-  <div id="status">lädt...</div>
+  <h1>bkey <small>local password manager</small></h1>
+  <div id="status">loading...</div>
   <hr>
 
-  <label for="serverUrl">bkey-Server-URL</label>
+  <label for="serverUrl">bkey server URL</label>
   <input id="serverUrl" placeholder="http://127.0.0.1:8642">
 
-  <label>Agent-Token (Nur-Fill-Modus, optional)</label>
-  <input id="agentName" placeholder="Agent-Name, z. B. browser">
-  <input id="agentToken" placeholder="Token aus: bkey agent add browser">
-  <button id="save" class="sec">Einstellungen speichern</button>
+  <label>agent token (fill-only mode, optional)</label>
+  <input id="agentName" placeholder="agent name, e.g. browser">
+  <input id="agentToken" placeholder="token from: bkey agent add browser">
+  <button id="save" class="sec">Save settings</button>
   <hr>
 
-  <label for="passphrase">Master-Passphrase (Vollmodus)</label>
-  <input id="passphrase" type="password" placeholder="Master-Passphrase">
-  <button id="unlock">Entsperren (füllen + speichern)</button>
-  <button id="lock" class="sec">Sperren</button>
+  <label for="passphrase">master passphrase (full mode)</label>
+  <input id="passphrase" type="password" placeholder="master passphrase">
+  <button id="unlock">Unlock (fill + save)</button>
+  <button id="lock" class="sec">Lock</button>
 
   <script src="popup.js"></script>
 </body>

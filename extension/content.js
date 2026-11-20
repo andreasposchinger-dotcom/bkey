@@ -153,8 +153,8 @@
     const r = await send({ type: "lookup", host: location.hostname });
     if (r.needsAuth || r.error) {
       if (r.needsAuth) {
-        msg("Kein Zugriff: Agent-Token fehlt/falsch oder bkey serve läuft nicht.");
-        msg("bkey-Popup in der Toolbar öffnen und konfigurieren / entsperren.");
+        msg("No access: agent token missing/wrong or bkey serve is not running.");
+        msg("Open the bkey popup in the toolbar and configure it / unlock.");
       } else {
         msg("Fehler: " + r.error);
       }
@@ -175,7 +175,7 @@
         menu.appendChild(b);
       }
     } else {
-      menu.appendChild(el("div", { class: "dim" }, "Keine Logins für diese Seite gespeichert."));
+      menu.appendChild(el("div", { class: "dim" }, "No logins saved for this site."));
     }
 
     menu.appendChild(el("hr"));
@@ -184,19 +184,19 @@
   }
 
   function saveSection() {
-    menu.appendChild(el("h3", {}, "Login speichern"));
+    menu.appendChild(el("h3", {}, "Save login"));
     const nameIn = el("input", {
       value: location.hostname,
-      placeholder: "Name, z. B. " + location.hostname,
+      placeholder: "name, e.g. " + location.hostname,
     });
-    const userIn = el("input", { placeholder: "Benutzername" });
+    const userIn = el("input", { placeholder: "username" });
     const guessed = guessUserField(currentPw);
     if (guessed) userIn.value = guessed.value || "";
-    const saveBtn = el("button", {}, "Passwort aus Feld speichern");
-    const hint = el("div", { class: "dim" }, "Speichert das aktuelle Passwortfeld.");
+    const saveBtn = el("button", {}, "Save password from field");
+    const hint = el("div", { class: "dim" }, "Stores the current password field.");
     saveBtn.addEventListener("click", async () => {
       if (!currentPw || !currentPw.value) {
-        msg("Passwortfeld ist leer.");
+        msg("Password field is empty.");
         return;
       }
       const r = await send({
@@ -209,11 +209,11 @@
       if (r.ok) {
         menu.innerHTML = "";
         menu.appendChild(el("h3", {}, "bkey"));
-        msg("Gespeichert.");
+        msg("Saved.");
       } else if (r.needsUnlock) {
-        msg("Zum Speichern Master-Passphrase im bkey-Popup entsperren.");
+        msg("Saving requires the master passphrase: unlock in the bkey popup.");
       } else {
-        msg("Fehler: " + (r.error || "Speichern fehlgeschlagen"));
+        msg("Fehler: " + (r.error || "save failed"));
       }
     });
     menu.appendChild(nameIn);
@@ -225,7 +225,7 @@
   async function fillFrom(e, pw) {
     const r = await send({ type: "reveal", name: e.name });
     if (r.needsAuth) {
-      msg("Kein Zugriff (Token / bkey serve prüfen, Popup öffnen).");
+      msg("No access (check token / bkey serve, open the popup).");
       return;
     }
     if (r.error) {
